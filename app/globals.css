@@ -1,0 +1,239 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 240 10% 3.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 3.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 3.9%;
+    --primary: 335 77% 50%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 240 4.8% 95.9%;
+    --secondary-foreground: 240 5.9% 10%;
+    --muted: 240 4.8% 95.9%;
+    --muted-foreground: 240 3.8% 46.1%;
+    --accent: 240 4.8% 95.9%;
+    --accent-foreground: 240 5.9% 10%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 5.9% 90%;
+    --input: 240 5.9% 90%;
+    --ring: 335 77% 50%;
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 240 10% 3.9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 335 77% 50%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
+    --accent: 240 3.7% 15.9%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 335 77% 50%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+  
+  /* Override default button styles */
+  button, 
+  .button,
+  [type="button"],
+  [type="reset"],
+  [type="submit"] {
+    border-radius: 8px !important;
+  }
+}
+
+/* Instagram Styles */
+.instagram-gradient-bg {
+  background: #f09433;
+  background: -moz-linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+  background: -webkit-linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+  background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+}
+
+.instagram-gradient-text {
+  background: -webkit-linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.instagram-purple {
+  color: #C13584;
+}
+
+.instagram-pink {
+  color: #E1306C;
+}
+
+.instagram-orange {
+  color: #F56040;
+}
+
+.instagram-blue {
+  color: #405DE6;
+}
+
+.instagram-yellow {
+  color: #FCAF45;
+}
+
+.instagram-shadow {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.instagram-card {
+  @apply bg-white dark:bg-gray-800 rounded-xl overflow-hidden instagram-shadow;
+}
+
+.instagram-button {
+  @apply bg-primary text-white font-medium py-2.5 px-4 rounded-lg transition-all hover:opacity-90;
+  background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+  color: white;
+}
+
+/* High contrast CTA buttons */
+.cta-button-primary {
+  background-color: rgba(0, 0, 0, 0.3) !important;
+  color: white !important;
+  border: 2px solid white !important;
+  font-weight: bold !important;
+  padding: 0.75rem 1.5rem !important;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+}
+
+.cta-button-secondary {
+  background-color: transparent !important;
+  color: white !important;
+  border: 2px solid white !important;
+  font-weight: bold !important;
+  padding: 0.75rem 1.5rem !important;
+}
+
+.feature-icon-bg {
+  @apply rounded-full p-4 transition-all duration-300 hover:scale-105;
+}
+
+/* Consistent button styles for hero section */
+.hero-button {
+  height: 56px !important;
+  min-width: 160px !important;
+  padding: 0 24px !important;
+  border-radius: 8px !important;
+  font-weight: 600 !important;
+  font-size: 1rem !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: all 0.2s ease !important;
+}
+
+.hero-button-primary {
+  background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%) !important;
+  color: white !important;
+  border: none !important;
+  box-shadow: 0 4px 12px rgba(220, 39, 67, 0.2) !important;
+}
+
+.hero-button-primary:hover {
+  box-shadow: 0 6px 16px rgba(220, 39, 67, 0.3) !important;
+  transform: translateY(-2px) !important;
+}
+
+.hero-button-secondary {
+  background-color: transparent !important;
+  color: #f1f1f1 !important;
+  border: 2px solid rgba(255, 255, 255, 0.8) !important;
+}
+
+.hero-button-secondary:hover {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Transparent dark button for gradient backgrounds */
+.transparent-dark-button {
+  height: 56px !important;
+  min-width: 160px !important;
+  padding: 0 24px !important;
+  border-radius: 8px !important;
+  font-weight: 600 !important;
+  font-size: 1rem !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background-color: rgba(0, 0, 0, 0.3) !important;
+  color: white !important;
+  border: none !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2) !important;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
+  transition: all 0.2s ease !important;
+  background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%) !important;
+}
+
+.transparent-dark-button:hover {
+  background-color: rgba(0, 0, 0, 0.5) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15) !important;
+  opacity: 0.9 !important;
+}
+
+.cta-button-secondary {
+  height: 56px !important;
+  min-width: 160px !important;
+  padding: 0 24px !important;
+  border-radius: 8px !important;
+  font-weight: 600 !important;
+  font-size: 1rem !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background-color: transparent !important;
+  color: white !important;
+  border: 2px solid white !important;
+  transition: all 0.2s ease !important;
+}
+
+/* Navbar button with no background */
+.navbar-button {
+  background: none !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  border: 1px solid #333 !important;
+  color: white !important;
+  height: 48px !important;
+  min-width: 120px !important;
+  border-radius: 8px !important;
+  font-weight: 500 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 24px !important;
+}
+
+.navbar-button:hover {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+}

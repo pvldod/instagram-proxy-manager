@@ -1,0 +1,34 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Account {
+  id           String    @id @default(cuid())
+  username     String    @unique
+  password     String
+  proxyAddress String
+  isActive     Boolean   @default(false)
+  lastLogin    DateTime?
+  sessionData  String?   @db.Text
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([isActive])
+}
+
+model Proxy {
+  id       String  @id @default(cuid())
+  address  String
+  port     Int
+  username String?
+  password String?
+  isActive Boolean @default(true)
+
+  @@unique([address, port])
+  @@index([isActive])
+}
