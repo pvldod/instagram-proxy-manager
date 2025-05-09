@@ -22,21 +22,20 @@ const errorMessages: Record<string, string> = {
   'csv-format-error': 'CSV file format is invalid. Please check that it contains the required columns.'
 }
 
+// Pro Next.js 15+, kde searchParams jsou staticke (ne async)
 export default function AddAccountPage({
   searchParams
 }: {
   searchParams: { [key: string]: string | string[] | undefined }
 }) {
-  // Správné zpracování searchParams v Next.js
-  const errorParam = searchParams.error;
-  const tabParam = searchParams.tab;
-  
-  const error = typeof errorParam === 'string' ? errorParam : undefined;
-  const tab = typeof tabParam === 'string' ? tabParam : 'single';
-  
-  const errorMessage = error ? errorMessages[error] || error : undefined
+  // Bezpečně získáme hodnoty z searchParams
+  const errorValue = searchParams?.error || '';
+  const tabValue = searchParams?.tab || '';
 
-  console.log("Rendering AddAccountPage with params:", { error, tab, errorMessage });
+  const error = typeof errorValue === 'string' ? errorValue : undefined;
+  const tab = typeof tabValue === 'string' ? tabValue : 'single';
+  
+  const errorMessage = error ? errorMessages[error] || error : undefined;
 
   return (
     <div className="container mx-auto p-4 md:p-6">
@@ -116,7 +115,7 @@ export default function AddAccountPage({
           
           <TabsContent value="bulk">
             <Card className="border-0 shadow-lg">
-              <form action={addBulkAccounts}>
+              <form action={addBulkAccounts} method="post" encType="application/x-www-form-urlencoded">
                 <CardHeader>
                   <CardTitle>Bulk Upload Accounts</CardTitle>
                   <CardDescription>
