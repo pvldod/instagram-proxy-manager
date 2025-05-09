@@ -12,66 +12,74 @@ Aplikace pro správu Instagram účtů a proxy serverů s možností automatick�
 
 ## Implementace přihlašování do Instagramu
 
-Aktuální implementace **simuluje** přihlašování do Instagramu. Pro reálnou implementaci je potřeba provést následující kroky:
+Tato aplikace nyní podporuje **skutečné přihlašování** do Instagram účtů pomocí automatizovaného prohlížeče s knihovnou Puppeteer.
 
-### 1. Instalace závislostí
+### Jak to funguje
 
-```bash
-npm install --save puppeteer
-# nebo
-npm install --save playwright
-```
+1. Aplikace spustí automatizovaný prohlížeč (headless Chrome) s proxy
+2. Automaticky vyplní přihlašovací údaje na Instagram
+3. Zpracuje možné chyby (nesprávné údaje, dvoufaktorové ověření, challenge)
+4. Uloží data relace (cookies, localStorage) pro budoucí použití bez přihlašování
+5. Používá session data pro přihlášení a odesílání zpráv
 
-### 2. Skutečná implementace v souboru `lib/instagram.ts`
+### Aktivace skutečného přihlašování
 
-Pro implementaci reálného přihlašování do Instagramu je potřeba upravit soubor `lib/instagram.ts`. Aktuální verze obsahuje pouze simulovanou implementaci (mock). Pro reálnou implementaci je potřeba:
+Pro aktivaci reálného přihlašování (místo simulované verze) máte dvě možnosti:
 
-1. Zakomentovat/odstranit simulované části
-2. Odkomentovat/přidat skutečnou implementaci s Puppeteer/Playwright
-3. Zajistit, že přihlašování probíhá na serveru (serverová komponenta v Next.js)
+1. **Pro vývoj/testování**: Nastavte v souboru `.env.local` proměnnou:
+   ```
+   USE_REAL_INSTAGRAM_LOGIN="true"
+   ```
 
-### 3. Nastavení CSP (Content Security Policy)
+2. **Pro produkci**: Automaticky se aktivuje v produkčním režimu (`NODE_ENV="production"`)
 
-Pro správné fungování automatizovaného prohlížeče je potřeba v Next.js upravit CSP:
+### Technická implementace
 
-```javascript
-// next.config.js
-module.exports = {
-  async headers() {
-    return [
-      {
-        source: '/(.*)',
-        headers: [
-          {
-            key: 'Content-Security-Policy',
-            value: "default-src 'self'; script-src 'self' 'unsafe-inline'; connect-src 'self' https://instagram.com; img-src 'self' data:;"
-          }
-        ]
-      }
-    ]
-  }
-}
-```
+Aplikace používá:
 
-### 4. Zabezpečení
+- **puppeteer-extra**: Rozšířená verze Puppeteeru pro lepší funkcionalitu
+- **puppeteer-extra-plugin-stealth**: Vyhýbá se detekci automatizace
+- **Multi-proxy podporu**: Formáty `host:port` i `host:port:username:password`
+- **Ukládání relace**: Cookies a localStorage uchovány v databázi
 
-Při implementaci reálného přihlašování dbejte na:
-
-- Šifrování hesel v databázi
-- Bezpečné ukládání cookies a session dat
-- Rotaci proxy serverů pro zamezení blokace
-- Implementaci anti-bot detection technik
-
-## Bezpečnostní varování
+### Bezpečnostní varování
 
 **Důležité upozornění:** Automatizované přihlašování do Instagram účtů může být v rozporu s podmínkami služby Instagramu. Použití této aplikace může vést k blokaci účtů nebo jiným sankcím ze strany Instagramu. Tuto aplikaci používejte pouze pro vzdělávací účely nebo pro účty, které máte oprávnění používat.
+
+## Instalace a nastavení
+
+1. Naklonujte repozitář
+   ```bash
+   git clone https://github.com/pvldod/instagram-proxy-manager.git
+   cd instagram-proxy-manager
+   ```
+
+2. Nainstalujte závislosti
+   ```bash
+   npm install
+   # nebo
+   pnpm install
+   ```
+
+3. Vytvořte soubor `.env.local` s připojením k databázi (volitelné pro vývoj)
+   ```
+   DATABASE_URL=""  # Prázdné pro mock data při vývoji
+   USE_REAL_INSTAGRAM_LOGIN="false"  # Nastavte na "true" pro aktivaci skutečného přihlašování
+   ```
+
+4. Spusťte vývojový server
+   ```bash
+   npm run dev
+   # nebo
+   pnpm dev
+   ```
 
 ## Konfigurace databáze
 
 Aplikace využívá databázi Neon Postgres. Pro správné fungování je potřeba nastavit proměnnou prostředí:
 
 ```
-DATABASE_URL=postgres://...
+DATABASE_URL="postgres://..."
 ```
 
 Pro místní vývoj bez databáze používá aplikace automaticky mock data.
