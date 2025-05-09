@@ -80,6 +80,13 @@ export async function getAccountById(id: string): Promise<Account | null> {
 }
 
 export async function addAccount(account: AccountInput): Promise<Account> {
+  console.log("lib/accounts.ts: Pokus o přidání účtu", { 
+    username: account.username, 
+    proxyAddress: account.proxyAddress,
+    environment: process.env.NODE_ENV,
+    useRealInstagram: process.env.USE_REAL_INSTAGRAM_LOGIN
+  });
+  
   try {
     const id = uuidv4()
     const query = `
@@ -90,12 +97,21 @@ export async function addAccount(account: AccountInput): Promise<Account> {
     `
 
     const result = await executeQuery(query, [id, account.username, account.password, account.proxyAddress])
-
+    console.log("Účet úspěšně přidán do databáze");
+    
     return result.rows[0] as Account
   } catch (error) {
     console.error("Failed to add account:", error)
+    
+    // Podrobnější logování chyby
+    if (error instanceof Error) {
+      console.error("Error details:", error.message);
+      console.error("Stack trace:", error.stack);
+    }
+    
     // Return mock data in development mode
     if (process.env.NODE_ENV === "development") {
+      console.log("Používám mock data pro development režim");
       return {
         id: uuidv4(),
         username: account.username,

@@ -4,6 +4,8 @@ import { neon } from "@neondatabase/serverless"
 const isDevelopment = process.env.NODE_ENV === 'development';
 const dbUrl = process.env.DATABASE_URL || '';
 
+console.log(`DB setup: environment=${process.env.NODE_ENV}, hasDbUrl=${!!dbUrl}`);
+
 // Initialize the SQL client or use a mock implementation
 let sql: any;
 
@@ -11,37 +13,53 @@ try {
   if (dbUrl.trim() === '') {
     console.log("Používám simulovanou databázi v development režimu");
     sql = {
-      query: async () => getMockQueryResult()
+      query: async (query: string, params: any[] = []) => {
+        console.log(`[MOCK DB] Query: ${query.slice(0, 100)}${query.length > 100 ? '...' : ''}`);
+        console.log(`[MOCK DB] Params: ${JSON.stringify(params)}`);
+        return getMockQueryResult(query);
+      }
     };
   } else {
+    console.log("Inicializuji spojení s databází Neon");
     sql = neon(dbUrl);
   }
 } catch (error) {
-  console.warn("Database connection setup failed, using mock implementation");
+  console.warn("Database connection setup failed, using mock implementation", error);
   sql = {
-    query: async () => getMockQueryResult()
+    query: async (query: string, params: any[] = []) => {
+      console.log(`[MOCK DB - FALLBACK] Query: ${query.slice(0, 100)}${query.length > 100 ? '...' : ''}`);
+      return getMockQueryResult(query);
+    }
   };
 }
 
 export { sql };
 
 // Helper function to get mock data based on query
-function getMockQueryResult() {
-  return { rows: [], rowCount: 0 };
+function getMockQueryResult(query?: string) {
+  if (!query) return { rows: [], rowCount: 0 };
+  return getMockDataForQuery(query);
 }
 
 // Helper function to execute raw SQL queries
 export async function executeQuery(query: string, params: any[] = []) {
   try {
+    console.log(`Executing query: ${query.slice(0, 100)}${query.length > 100 ? '...' : ''}`);
+    console.log(`Query params:`, params);
+    
     // Pokud jsme v development režimu bez databáze, použijeme mock data
     if (isDevelopment && dbUrl.trim() === '') {
+      console.log("Používám mock data pro query");
       return getMockDataForQuery(query);
     }
     
-    return await sql.query(query, params);
+    const result = await sql.query(query, params);
+    console.log(`Query result: rows=${result.rows?.length || 0}, rowCount=${result.rowCount || 0}`);
+    return result;
   } catch (error) {
     console.error("Database query error:", error);
     // In development or preview mode, return mock data
+    console.log("Vracím mock data kvůli chybě v dotazu");
     return getMockDataForQuery(query);
   }
 }

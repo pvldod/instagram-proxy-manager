@@ -4,11 +4,13 @@
   "framework": "nextjs",
   "outputDirectory": ".next",
   "env": {
-    "USE_REAL_INSTAGRAM_LOGIN": "false"
+    "USE_REAL_INSTAGRAM_LOGIN": "false",
+    "NODE_ENV": "production"
   },
   "build": {
     "env": {
-      "USE_REAL_INSTAGRAM_LOGIN": "false"
+      "USE_REAL_INSTAGRAM_LOGIN": "false",
+      "NODE_ENV": "production"
     }
   },
   "headers": [

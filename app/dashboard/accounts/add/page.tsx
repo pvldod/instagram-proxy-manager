@@ -38,6 +38,8 @@ export default async function AddAccountPage({
   
   const errorMessage = error ? errorMessages[error] || error : undefined
 
+  console.log("Rendering AddAccountPage with params:", { error, tab, errorMessage });
+
   return (
     <div className="container mx-auto p-4 md:p-6">
       <div className="flex flex-col gap-6">
@@ -75,7 +77,7 @@ export default async function AddAccountPage({
           
           <TabsContent value="single">
             <Card className="border-0 shadow-lg">
-              <form action={addSingleAccount}>
+              <form action={addSingleAccount} encType="application/x-www-form-urlencoded" method="post">
                 <CardHeader>
                   <CardTitle>Account Details</CardTitle>
                   <CardDescription>
