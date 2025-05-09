@@ -20,7 +20,12 @@ const nextConfig = {
       };
     }
     
-    config.externals = [...(config.externals || []), 'puppeteer', 'puppeteer-extra', 'puppeteer-extra-plugin-stealth'];
+    config.externals = [
+      ...(config.externals || []), 
+      'puppeteer', 
+      'puppeteer-extra', 
+      'puppeteer-extra-plugin-stealth'
+    ];
     
     return config;
   },

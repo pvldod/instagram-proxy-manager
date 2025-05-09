@@ -79,11 +79,19 @@ async function loadPuppeteer() {
   if (typeof window === 'undefined') {
     try {
       // Dynamický import funguje lépe s Next.js než statický import nahoře
-      const puppeteerExtra = await import('puppeteer-extra');
-      const puppeteer = puppeteerExtra.default;
-      
-      const StealthPlugin = await import('puppeteer-extra-plugin-stealth');
-      puppeteer.use(StealthPlugin.default());
+      // Obaleno v try-catch, aby to nefailovalo při buildu
+      let puppeteer = null;
+      try {
+        const puppeteerExtra = await import('puppeteer-extra');
+        puppeteer = puppeteerExtra.default;
+        
+        const StealthPlugin = await import('puppeteer-extra-plugin-stealth');
+        puppeteer.use(StealthPlugin.default());
+      } catch (e) {
+        console.error('Chyba při importu puppeteer-extra, zkouším základní puppeteer', e);
+        const puppeteerModule = await import('puppeteer');
+        puppeteer = puppeteerModule.default;
+      }
       
       return puppeteer;
     } catch (error) {
