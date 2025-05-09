@@ -22,19 +22,17 @@ const errorMessages: Record<string, string> = {
   'csv-format-error': 'CSV file format is invalid. Please check that it contains the required columns.'
 }
 
-export default async function AddAccountPage({
+export default function AddAccountPage({
   searchParams
 }: {
   searchParams: { [key: string]: string | string[] | undefined }
 }) {
-  // Opraveno: použití searchParams s await pro Next.js 13+
-  const error = searchParams.error ? 
-    (typeof searchParams.error === 'string' ? searchParams.error : undefined) : 
-    undefined;
+  // Správné zpracování searchParams v Next.js
+  const errorParam = searchParams.error;
+  const tabParam = searchParams.tab;
   
-  const tab = searchParams.tab ? 
-    (typeof searchParams.tab === 'string' ? searchParams.tab : 'single') : 
-    'single';
+  const error = typeof errorParam === 'string' ? errorParam : undefined;
+  const tab = typeof tabParam === 'string' ? tabParam : 'single';
   
   const errorMessage = error ? errorMessages[error] || error : undefined
 
