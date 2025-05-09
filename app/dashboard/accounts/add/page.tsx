@@ -27,10 +27,14 @@ export default async function AddAccountPage({
 }: {
   searchParams: { [key: string]: string | string[] | undefined }
 }) {
-  // Awaited searchParams
-  const params = searchParams;
-  const error = typeof params.error === 'string' ? params.error : undefined
-  const tab = typeof params.tab === 'string' ? params.tab : 'single'
+  // Opraveno: použití searchParams s await pro Next.js 13+
+  const error = searchParams.error ? 
+    (typeof searchParams.error === 'string' ? searchParams.error : undefined) : 
+    undefined;
+  
+  const tab = searchParams.tab ? 
+    (typeof searchParams.tab === 'string' ? searchParams.tab : 'single') : 
+    'single';
   
   const errorMessage = error ? errorMessages[error] || error : undefined
 

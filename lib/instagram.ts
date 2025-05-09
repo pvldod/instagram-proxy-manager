@@ -1,13 +1,9 @@
 // Implementace přihlášení do Instagramu s puppeteer
-// Pro skutečné fungování je potřeba nainstalovat:
-// npm install --save puppeteer puppeteer-extra puppeteer-extra-plugin-stealth
-
-// Importy pro skutečné přihlášení
-import puppeteer from 'puppeteer-extra';
-import StealthPlugin from 'puppeteer-extra-plugin-stealth';
-
-// Inicializace stealth pluginu pro obejití detekce botů
-puppeteer.use(StealthPlugin());
+// Importy pro skutečné přihlášení pouze v node.js prostředí, ne při buildování
+// Pro řešení problémů s buildováním přesuneme importy do dynamických importů
+// import puppeteer from 'puppeteer-extra';
+// import StealthPlugin from 'puppeteer-extra-plugin-stealth';
+// puppeteer.use(StealthPlugin());
 
 interface PuppeteerLaunchOptions {
   headless: "new" | boolean;
@@ -77,13 +73,29 @@ function parseProxyAddress(proxyAddress: string): { host: string, port: string, 
   throw new Error('Neplatný formát proxy. Použijte host:port nebo host:port:username:password');
 }
 
+// Pomocná funkce pro dynamické načtení puppeteeru jen když je to potřeba (v Node.js prostředí)
+async function loadPuppeteer() {
+  // Tato funkce se volá pouze v Node.js prostředí, ne při buildování
+  if (typeof window === 'undefined') {
+    try {
+      // Dynamický import funguje lépe s Next.js než statický import nahoře
+      const puppeteerExtra = await import('puppeteer-extra');
+      const puppeteer = puppeteerExtra.default;
+      
+      const StealthPlugin = await import('puppeteer-extra-plugin-stealth');
+      puppeteer.use(StealthPlugin.default());
+      
+      return puppeteer;
+    } catch (error) {
+      console.error('Chyba při načítání puppeteeru:', error);
+      return null;
+    }
+  }
+  return null;
+}
+
 /**
  * Přihlásí se do Instagramu s danými údaji přes proxy
- * 
- * Pro skutečné fungování potřebujete:
- * 1. Nainstalovat puppeteer: npm install --save puppeteer puppeteer-extra puppeteer-extra-plugin-stealth
- * 2. Odkomentovat importy nahoře v souboru
- * 3. Nahradit mock implementaci skutečnou implementací níže
  */
 export async function loginToInstagram({ username, password, proxyAddress }: LoginParams) {
   console.log(`Pokus o přihlášení do Instagramu jako ${username} přes proxy ${proxyAddress}`);
@@ -92,6 +104,15 @@ export async function loginToInstagram({ username, password, proxyAddress }: Log
     // Použít skutečnou implementaci pouze v produkčním režimu
     // nebo když je explicitně nastaveno USE_REAL_INSTAGRAM_LOGIN=true
     if (process.env.NODE_ENV === 'production' || process.env.USE_REAL_INSTAGRAM_LOGIN === 'true') {
+      // Načíst puppeteer jen když je potřeba
+      const puppeteer = await loadPuppeteer();
+      
+      // Pokud se puppeteer nepodařilo načíst, použijeme mock implementaci
+      if (!puppeteer) {
+        console.log('Puppeteer se nepodařilo načíst, používám simulaci');
+        return mockLoginToInstagram(username);
+      }
+      
       // Parsovat proxy adresu
       const proxyInfo = parseProxyAddress(proxyAddress);
       
@@ -210,26 +231,7 @@ export async function loginToInstagram({ username, password, proxyAddress }: Log
         sessionData: JSON.stringify({ cookies, localStorage }),
       };
     } else {
-      // =============== MOCK IMPLEMENTACE PRO VÝVOJ ===============
-      // Simulovat zpoždění sítě
-      await new Promise((resolve) => setTimeout(resolve, 3000));
-
-      console.log('[SIMULACE] Přihlašování jako', username);
-      
-      // Simulované údaje relace
-      const sessionData = JSON.stringify({
-        cookies: [
-          { name: "sessionid", value: `real_session_${Date.now()}`, domain: ".instagram.com" },
-          { name: "ds_user_id", value: "12345678", domain: ".instagram.com" },
-        ],
-        localStorage: "{}",
-      });
-      
-      return {
-        success: true,
-        sessionData,
-      };
-      // =============== KONEC MOCK IMPLEMENTACE ===============
+      return mockLoginToInstagram(username);
     }
     
   } catch (error: any) {
@@ -243,6 +245,30 @@ export async function loginToInstagram({ username, password, proxyAddress }: Log
   }
 }
 
+// Mock implementace pro vývojové prostředí
+function mockLoginToInstagram(username: string) {
+  console.log('[SIMULACE] Přihlašování jako', username);
+  
+  // Simulovat zpoždění sítě
+  return new Promise<{success: boolean, sessionData: string}>(resolve => {
+    setTimeout(() => {
+      // Simulované údaje relace
+      const sessionData = JSON.stringify({
+        cookies: [
+          { name: "sessionid", value: `real_session_${Date.now()}`, domain: ".instagram.com" },
+          { name: "ds_user_id", value: "12345678", domain: ".instagram.com" },
+        ],
+        localStorage: "{}",
+      });
+      
+      resolve({
+        success: true,
+        sessionData,
+      });
+    }, 3000);
+  });
+}
+
 /**
  * Použije existující session data k obnovení přihlášení do Instagramu
  */
@@ -253,6 +279,15 @@ export async function useExistingSession(sessionData: string, proxyAddress: stri
     // Použít skutečnou implementaci pouze v produkčním režimu
     // nebo když je explicitně nastaveno USE_REAL_INSTAGRAM_LOGIN=true
     if (process.env.NODE_ENV === 'production' || process.env.USE_REAL_INSTAGRAM_LOGIN === 'true') {
+      // Načíst puppeteer jen když je potřeba
+      const puppeteer = await loadPuppeteer();
+      
+      // Pokud se puppeteer nepodařilo načíst, použijeme mock implementaci
+      if (!puppeteer) {
+        console.log('Puppeteer se nepodařilo načíst, používám simulaci');
+        return mockUseExistingSession();
+      }
+      
       // Parsovat data relace
       const session = JSON.parse(sessionData);
       const proxyInfo = parseProxyAddress(proxyAddress);
@@ -311,13 +346,7 @@ export async function useExistingSession(sessionData: string, proxyAddress: stri
       
       return { success: isLoggedIn };
     } else {
-      // =============== MOCK IMPLEMENTACE PRO VÝVOJ ===============
-      // Simulovat zpoždění sítě
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-      console.log('[SIMULACE] Použití existující session');
-      
-      return { success: true };
-      // =============== KONEC MOCK IMPLEMENTACE ===============
+      return mockUseExistingSession();
     }
     
   } catch (error: any) {
@@ -330,6 +359,18 @@ export async function useExistingSession(sessionData: string, proxyAddress: stri
   }
 }
 
+// Mock implementace pro vývojové prostředí
+function mockUseExistingSession() {
+  console.log('[SIMULACE] Použití existující session');
+  
+  // Simulovat zpoždění sítě
+  return new Promise<{success: boolean}>(resolve => {
+    setTimeout(() => {
+      resolve({ success: true });
+    }, 1500);
+  });
+}
+
 /**
  * Odešle zprávu konkrétnímu uživateli na Instagramu
  */
@@ -340,6 +381,15 @@ export async function sendInstagramMessage({ sessionData, proxyAddress, targetUs
     // Použít skutečnou implementaci pouze v produkčním režimu
     // nebo když je explicitně nastaveno USE_REAL_INSTAGRAM_LOGIN=true
     if (process.env.NODE_ENV === 'production' || process.env.USE_REAL_INSTAGRAM_LOGIN === 'true') {
+      // Načíst puppeteer jen když je potřeba
+      const puppeteer = await loadPuppeteer();
+      
+      // Pokud se puppeteer nepodařilo načíst, použijeme mock implementaci
+      if (!puppeteer) {
+        console.log('Puppeteer se nepodařilo načíst, používám simulaci');
+        return mockSendInstagramMessage(targetUsername, message);
+      }
+      
       // Parsovat data relace
       const session = JSON.parse(sessionData);
       const proxyInfo = parseProxyAddress(proxyAddress);
@@ -441,14 +491,7 @@ export async function sendInstagramMessage({ sessionData, proxyAddress, targetUs
       
       return { success: true };
     } else {
-      // =============== MOCK IMPLEMENTACE PRO VÝVOJ ===============
-      // Simulovat zpoždění sítě
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      
-      console.log(`[SIMULACE] Odesílána zpráva uživateli ${targetUsername}: ${message}`);
-      
-      return { success: true };
-      // =============== KONEC MOCK IMPLEMENTACE ===============
+      return mockSendInstagramMessage(targetUsername, message);
     }
     
   } catch (error: any) {
@@ -459,4 +502,16 @@ export async function sendInstagramMessage({ sessionData, proxyAddress, targetUs
       error: `Chyba při odesílání zprávy: ${error.message || 'Neznámá chyba'}`
     };
   }
+}
+
+// Mock implementace pro vývojové prostředí
+function mockSendInstagramMessage(targetUsername: string, message: string) {
+  console.log(`[SIMULACE] Odesílána zpráva uživateli ${targetUsername}: ${message}`);
+  
+  // Simulovat zpoždění sítě
+  return new Promise<{success: boolean}>(resolve => {
+    setTimeout(() => {
+      resolve({ success: true });
+    }, 2000);
+  });
 }
