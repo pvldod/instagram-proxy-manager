@@ -1,6 +1,6 @@
-// Implementace přihlášení do Instagramu s puppeteer
-// Importy pro skutečné přihlášení pouze v node.js prostředí, ne při buildování
-// Pro řešení problémů s buildováním přesuneme importy do dynamických importů
+// Implementation of Instagram login with puppeteer
+// Imports for real login only in node.js environment, not during build time
+// To solve build problems, we'll move imports to dynamic imports
 // import puppeteer from 'puppeteer-extra';
 // import StealthPlugin from 'puppeteer-extra-plugin-stealth';
 // puppeteer.use(StealthPlugin());
@@ -53,49 +53,49 @@ interface SendMessageParams {
   message: string
 }
 
-// Helper funkce pro parsování proxy adresy
+// Helper function for parsing proxy address
 function parseProxyAddress(proxyAddress: string): { host: string, port: string, username?: string, password?: string } {
   const parts = proxyAddress.split(':');
-  
+
   if (parts.length === 2) {
-    // Formát host:port
+    // Format host:port
     return { host: parts[0], port: parts[1] };
   } else if (parts.length === 4) {
-    // Formát host:port:username:password
-    return { 
-      host: parts[0], 
-      port: parts[1], 
-      username: parts[2], 
-      password: parts[3] 
+    // Format host:port:username:password
+    return {
+      host: parts[0],
+      port: parts[1],
+      username: parts[2],
+      password: parts[3]
     };
   }
-  
-  throw new Error('Neplatný formát proxy. Použijte host:port nebo host:port:username:password');
+
+  throw new Error('Invalid proxy format. Use host:port or host:port:username:password');
 }
 
-// Pomocná funkce pro dynamické načtení puppeteeru jen když je to potřeba (v Node.js prostředí)
+// Helper function for dynamically loading puppeteer only when needed (in Node.js environment)
 async function loadPuppeteer() {
-  // Tato funkce se volá pouze v Node.js prostředí, ne při buildování
+  // This function is called only in Node.js environment, not during build
   if (typeof window === 'undefined') {
     try {
-      // Dynamický import funguje lépe s Next.js než statický import nahoře
-      // Obaleno v try-catch, aby to nefailovalo při buildu
+      // Dynamic import works better with Next.js than static import at the top
+      // Wrapped in try-catch to prevent failure during build
       let puppeteer = null;
       try {
         const puppeteerExtra = await import('puppeteer-extra');
         puppeteer = puppeteerExtra.default;
-        
+
         const StealthPlugin = await import('puppeteer-extra-plugin-stealth');
         puppeteer.use(StealthPlugin.default());
       } catch (e) {
-        console.error('Chyba při importu puppeteer-extra, zkouším základní puppeteer', e);
+        console.error('Error importing puppeteer-extra, trying basic puppeteer', e);
         const puppeteerModule = await import('puppeteer');
         puppeteer = puppeteerModule.default;
       }
-      
+
       return puppeteer;
     } catch (error) {
-      console.error('Chyba při načítání puppeteeru:', error);
+      console.error('Error loading puppeteer:', error);
       return null;
     }
   }
@@ -103,28 +103,28 @@ async function loadPuppeteer() {
 }
 
 /**
- * Přihlásí se do Instagramu s danými údaji přes proxy
+ * Logs into Instagram with the provided credentials via proxy
  */
 export async function loginToInstagram({ username, password, proxyAddress }: LoginParams) {
-  console.log(`Pokus o přihlášení do Instagramu jako ${username} přes proxy ${proxyAddress}`);
-  
+  console.log(`Attempt to login to Instagram as ${username} via proxy ${proxyAddress}`);
+
   try {
-    // Použít skutečnou implementaci pouze v produkčním režimu
-    // nebo když je explicitně nastaveno USE_REAL_INSTAGRAM_LOGIN=true
+    // Use real implementation only in production mode
+    // or when USE_REAL_INSTAGRAM_LOGIN=true is explicitly set
     if (process.env.NODE_ENV === 'production' || process.env.USE_REAL_INSTAGRAM_LOGIN === 'true') {
-      // Načíst puppeteer jen když je potřeba
+      // Load puppeteer only when needed
       const puppeteer = await loadPuppeteer();
-      
-      // Pokud se puppeteer nepodařilo načíst, použijeme mock implementaci
+
+      // If puppeteer couldn't be loaded, use mock implementation
       if (!puppeteer) {
-        console.log('Puppeteer se nepodařilo načíst, používám simulaci');
+        console.log('Puppeteer could not be loaded, using simulation');
         return mockLoginToInstagram(username);
       }
-      
-      // Parsovat proxy adresu
+
+      // Parse proxy address
       const proxyInfo = parseProxyAddress(proxyAddress);
-      
-      // Nastavení pro puppeteer
+
+      // Settings for puppeteer
       const options: any = {
         headless: "new",
         args: [
@@ -137,84 +137,84 @@ export async function loginToInstagram({ username, password, proxyAddress }: Log
         ],
         executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined
       };
-      
-      // Spustit browser
+
+      // Launch browser
       const browser = await puppeteer.launch(options);
       const page = await browser.newPage();
-      
-      // Nastavit autentizaci pro proxy, pokud je potřeba
+
+      // Set authentication for proxy if needed
       if (proxyInfo.username && proxyInfo.password) {
         await page.authenticate({
           username: proxyInfo.username,
           password: proxyInfo.password,
         });
       }
-      
-      // Nastavit user agent pro reálnější prohlížeč
+
+      // Set user agent for a more realistic browser
       await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36');
-      
-      // Přejít na Instagram
+
+      // Navigate to Instagram
       await page.goto('https://www.instagram.com/accounts/login/', { waitUntil: 'networkidle2' });
-      
-      // Přijmout cookies, pokud se zobrazí dialog
+
+      // Accept cookies if dialog appears
       try {
         const acceptCookies = await page.$x("//button[contains(text(), 'Accept') or contains(text(), 'Accept All')]");
         if (acceptCookies.length > 0) {
           await acceptCookies[0].click();
-          await page.waitForTimeout(2000); // Počkat na zpracování
+          await page.waitForTimeout(2000); // Wait for processing
         }
       } catch (e) {
-        console.log('Dialog s cookies se nezobrazil nebo byl jiný formát');
+        console.log('Cookie dialog did not appear or was in a different format');
       }
-      
-      // Vyplnit přihlašovací údaje
+
+      // Fill in login credentials
       await page.waitForSelector('input[name="username"]');
       await page.type('input[name="username"]', username, { delay: 50 });
       await page.type('input[name="password"]', password, { delay: 50 });
-      
-      // Kliknout na přihlašovací tlačítko
+
+      // Click login button
       await Promise.all([
         page.waitForNavigation({ waitUntil: 'networkidle0' }),
         page.click('button[type="submit"]')
       ]);
-      
-      // Kontrola, zda jsme přihlášeni - kontrola URL nebo přítomnost prvků
+
+      // Check if we're logged in - check URL or presence of elements
       const currentUrl = page.url();
-      
-      // Pokud jsme dosud na přihlašovací stránce, pravděpodobně došlo k chybě
+
+      // If we're still on the login page, there's probably an error
       if (currentUrl.includes('accounts/login')) {
-        // Zkusit najít chybovou zprávu
+        // Try to find error message
         const errorMessage = await page.evaluate(() => {
           const errorElement = document.querySelector('p[role="alert"]');
           return errorElement ? errorElement.textContent : null;
         });
-        
+
         await browser.close();
         return {
           success: false,
-          error: errorMessage || 'Přihlášení se nezdařilo. Zkontrolujte své přihlašovací údaje.'
+          error: errorMessage || 'Login failed. Check your credentials.'
         };
       }
-      
-      // Kontrola dvoufaktorového ověření
+
+      // Check for two-factor authentication
       if (currentUrl.includes('two_factor')) {
         await browser.close();
         return {
           success: false,
-          error: 'Účet vyžaduje dvoufaktorové ověření. Tato funkce není implementována.'
+          error: 'Account requires two-factor authentication. This feature is not implemented.'
         };
       }
-      
-      // Kontrola jiných výzev (telefon, email, captcha)
+
+      // Check for other challenges (phone, email, captcha)
       if (currentUrl.includes('challenge')) {
         await browser.close();
         return {
           success: false,
-          error: 'Instagram vyžaduje další ověření. Zkuste se přihlásit manuálně v prohlížeči.'
+          error: 'Instagram requires additional verification. Try logging in manually in a browser.'
         };
       }
-      
-      // Získat cookies a localStorage pro budoucí použití
+
+      // Get cookies and localStorage for future use
       const cookies = await page.cookies();
       const localStorage = await page.evaluate(() => {
         const data: Record<string, string> = {};
@@ -229,11 +229,11 @@ export async function loginToInstagram({ username, password, proxyAddress }: Log
         }
         return data;
       });
-      
-      // Zavřít prohlížeč
+
+      // Close browser
       await browser.close();
-      
-      // Vrátit úspěšný výsledek s daty relace
+
+      // Return successful result with session data
       return {
         success: true,
         sessionData: JSON.stringify({ cookies, localStorage }),
@@ -241,14 +241,14 @@ export async function loginToInstagram({ username, password, proxyAddress }: Log
     } else {
       return mockLoginToInstagram(username);
     }
-    
+
   } catch (error: any) {
-    console.error('Chyba při přihlašování:', error);
-    
-    // Vrátit chybu
+    console.error('Error during login:', error);
+
+    // Return error
     return {
       success: false,
-      error: `Chyba při přihlašování: ${error.message || 'Neznámá chyba'}`
+      error: `Error during login: ${error.message || 'Unknown error'}`
     };
   }
 }
@@ -256,9 +256,9 @@ export async function loginToInstagram({ username, password, proxyAddress }: Log
 // Mock implementace pro vývojové prostředí
 function mockLoginToInstagram(username: string) {
   console.log('[SIMULACE] Přihlašování jako', username);
-  
+
   // Simulovat zpoždění sítě
-  return new Promise<{success: boolean, sessionData: string}>(resolve => {
+  return new Promise<{ success: boolean, sessionData: string }>(resolve => {
     setTimeout(() => {
       // Simulované údaje relace
       const sessionData = JSON.stringify({
@@ -268,7 +268,7 @@ function mockLoginToInstagram(username: string) {
         ],
         localStorage: "{}",
       });
-      
+
       resolve({
         success: true,
         sessionData,
@@ -282,24 +282,24 @@ function mockLoginToInstagram(username: string) {
  */
 export async function useExistingSession(sessionData: string, proxyAddress: string) {
   console.log(`Použití existující relace s proxy ${proxyAddress}`);
-  
+
   try {
     // Použít skutečnou implementaci pouze v produkčním režimu
     // nebo když je explicitně nastaveno USE_REAL_INSTAGRAM_LOGIN=true
     if (process.env.NODE_ENV === 'production' || process.env.USE_REAL_INSTAGRAM_LOGIN === 'true') {
       // Načíst puppeteer jen když je potřeba
       const puppeteer = await loadPuppeteer();
-      
+
       // Pokud se puppeteer nepodařilo načíst, použijeme mock implementaci
       if (!puppeteer) {
         console.log('Puppeteer se nepodařilo načíst, používám simulaci');
         return mockUseExistingSession();
       }
-      
+
       // Parsovat data relace
       const session = JSON.parse(sessionData);
       const proxyInfo = parseProxyAddress(proxyAddress);
-      
+
       // Nastavení pro puppeteer
       const options: any = {
         headless: "new",
@@ -310,11 +310,11 @@ export async function useExistingSession(sessionData: string, proxyAddress: stri
         ],
         executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined
       };
-      
+
       // Spustit browser
       const browser = await puppeteer.launch(options);
       const page = await browser.newPage();
-      
+
       // Nastavit autentizaci pro proxy, pokud je potřeba
       if (proxyInfo.username && proxyInfo.password) {
         await page.authenticate({
@@ -322,12 +322,12 @@ export async function useExistingSession(sessionData: string, proxyAddress: stri
           password: proxyInfo.password,
         });
       }
-      
+
       // Nastavení cookies z předchozí relace
       if (session.cookies && Array.isArray(session.cookies)) {
         await page.setCookie(...session.cookies);
       }
-      
+
       // Nastavení localStorage z předchozí relace
       if (session.localStorage) {
         await page.evaluateOnNewDocument((storageData) => {
@@ -341,26 +341,26 @@ export async function useExistingSession(sessionData: string, proxyAddress: stri
           }
         }, session.localStorage);
       }
-      
+
       // Přejít na Instagram pro ověření relace
       await page.goto('https://www.instagram.com/', { waitUntil: 'networkidle2' });
-      
+
       // Zkontrolovat, zda jsme přihlášeni - kontrola nepřítomnosti přihlašovacího tlačítka
       const isLoggedIn = await page.evaluate(() => {
         return !document.querySelector('a[href="/accounts/login/"]');
       });
-      
+
       await browser.close();
-      
+
       return { success: isLoggedIn };
     } else {
       return mockUseExistingSession();
     }
-    
+
   } catch (error: any) {
     console.error('Chyba při používání existující relace:', error);
-    
-    return { 
+
+    return {
       success: false,
       error: `Chyba při používání existující relace: ${error.message || 'Neznámá chyba'}`
     };
@@ -370,9 +370,9 @@ export async function useExistingSession(sessionData: string, proxyAddress: stri
 // Mock implementace pro vývojové prostředí
 function mockUseExistingSession() {
   console.log('[SIMULACE] Použití existující session');
-  
+
   // Simulovat zpoždění sítě
-  return new Promise<{success: boolean}>(resolve => {
+  return new Promise<{ success: boolean }>(resolve => {
     setTimeout(() => {
       resolve({ success: true });
     }, 1500);
@@ -384,24 +384,24 @@ function mockUseExistingSession() {
  */
 export async function sendInstagramMessage({ sessionData, proxyAddress, targetUsername, message }: SendMessageParams) {
   console.log(`Odesílání zprávy uživateli ${targetUsername} pomocí proxy ${proxyAddress}`);
-  
+
   try {
     // Použít skutečnou implementaci pouze v produkčním režimu
     // nebo když je explicitně nastaveno USE_REAL_INSTAGRAM_LOGIN=true
     if (process.env.NODE_ENV === 'production' || process.env.USE_REAL_INSTAGRAM_LOGIN === 'true') {
       // Načíst puppeteer jen když je potřeba
       const puppeteer = await loadPuppeteer();
-      
+
       // Pokud se puppeteer nepodařilo načíst, použijeme mock implementaci
       if (!puppeteer) {
         console.log('Puppeteer se nepodařilo načíst, používám simulaci');
         return mockSendInstagramMessage(targetUsername, message);
       }
-      
+
       // Parsovat data relace
       const session = JSON.parse(sessionData);
       const proxyInfo = parseProxyAddress(proxyAddress);
-      
+
       // Nastavení pro puppeteer
       const options: any = {
         headless: "new",
@@ -412,11 +412,11 @@ export async function sendInstagramMessage({ sessionData, proxyAddress, targetUs
         ],
         executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined
       };
-      
+
       // Spustit browser
       const browser = await puppeteer.launch(options);
       const page = await browser.newPage();
-      
+
       // Nastavit autentizaci pro proxy, pokud je potřeba
       if (proxyInfo.username && proxyInfo.password) {
         await page.authenticate({
@@ -424,12 +424,12 @@ export async function sendInstagramMessage({ sessionData, proxyAddress, targetUs
           password: proxyInfo.password,
         });
       }
-      
+
       // Nastavení cookies z předchozí relace
       if (session.cookies && Array.isArray(session.cookies)) {
         await page.setCookie(...session.cookies);
       }
-      
+
       // Nastavení localStorage z předchozí relace
       if (session.localStorage) {
         await page.evaluateOnNewDocument((storageData) => {
@@ -443,33 +443,33 @@ export async function sendInstagramMessage({ sessionData, proxyAddress, targetUs
           }
         }, session.localStorage);
       }
-      
+
       // Přejít na stránku přímých zpráv
       await page.goto(`https://www.instagram.com/direct/inbox/`, { waitUntil: 'networkidle2' });
-      
+
       // Kliknout na tlačítko pro novou zprávu
       await page.waitForSelector('button[aria-label="New message"]');
       await page.click('button[aria-label="New message"]');
-      
+
       // Vyhledat uživatele
       await page.waitForSelector('input[placeholder="Search..."]');
       await page.type('input[placeholder="Search..."]', targetUsername, { delay: 50 });
-      
+
       // Počkat na výsledky vyhledávání a vybrat uživatele
       await page.waitForSelector('[role="dialog"] [role="button"]');
       const searchResults = await page.$$('[role="dialog"] [role="button"]');
-      
+
       if (searchResults.length === 0) {
         throw new Error(`Uživatel ${targetUsername} nebyl nalezen`);
       }
-      
+
       // Kliknout na prvního nalezeného uživatele
       await searchResults[0].click();
-      
+
       // Kliknout na tlačítko pro pokračování
       await page.waitForSelector('button[tabindex="0"]');
       const nextButtons = await page.$$('button[tabindex="0"]');
-      
+
       // Najít tlačítko Next/Chat
       let foundNextButton = false;
       for (const button of nextButtons) {
@@ -480,32 +480,32 @@ export async function sendInstagramMessage({ sessionData, proxyAddress, targetUs
           break;
         }
       }
-      
+
       if (!foundNextButton) {
         throw new Error('Nepodařilo se najít tlačítko pro pokračování');
       }
-      
+
       // Počkat na chat a poslat zprávu
       await page.waitForSelector('div[aria-label="Message"]', { timeout: 10000 });
       await page.type('div[aria-label="Message"]', message, { delay: 50 });
-      
+
       // Odeslat zprávu
       await page.keyboard.press('Enter');
-      
+
       // Počkat na odeslání
       await page.waitForTimeout(2000);
-      
+
       await browser.close();
-      
+
       return { success: true };
     } else {
       return mockSendInstagramMessage(targetUsername, message);
     }
-    
+
   } catch (error: any) {
     console.error('Chyba při odesílání zprávy:', error);
-    
-    return { 
+
+    return {
       success: false,
       error: `Chyba při odesílání zprávy: ${error.message || 'Neznámá chyba'}`
     };
@@ -515,9 +515,9 @@ export async function sendInstagramMessage({ sessionData, proxyAddress, targetUs
 // Mock implementace pro vývojové prostředí
 function mockSendInstagramMessage(targetUsername: string, message: string) {
   console.log(`[SIMULACE] Odesílána zpráva uživateli ${targetUsername}: ${message}`);
-  
+
   // Simulovat zpoždění sítě
-  return new Promise<{success: boolean}>(resolve => {
+  return new Promise<{ success: boolean }>(resolve => {
     setTimeout(() => {
       resolve({ success: true });
     }, 2000);

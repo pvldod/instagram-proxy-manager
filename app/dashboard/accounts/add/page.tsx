@@ -22,19 +22,19 @@ const errorMessages: Record<string, string> = {
   'csv-format-error': 'CSV file format is invalid. Please check that it contains the required columns.'
 }
 
-// Pro Next.js 15+, kde searchParams jsou staticke (ne async)
+// For Next.js 15+, where searchParams are static (not async)
 export default function AddAccountPage({
   searchParams
 }: {
   searchParams: { [key: string]: string | string[] | undefined }
 }) {
-  // Bezpečně získáme hodnoty z searchParams
+  // Safely get values from searchParams
   const errorValue = searchParams?.error || '';
   const tabValue = searchParams?.tab || '';
 
   const error = typeof errorValue === 'string' ? errorValue : undefined;
   const tab = typeof tabValue === 'string' ? tabValue : 'single';
-  
+
   const errorMessage = error ? errorMessages[error] || error : undefined;
 
   return (
@@ -71,10 +71,10 @@ export default function AddAccountPage({
               <span>CSV Upload</span>
             </TabsTrigger>
           </TabsList>
-          
+
           <TabsContent value="single">
             <Card className="border-0 shadow-lg">
-              <form action={addSingleAccount} encType="application/x-www-form-urlencoded" method="post">
+              <form action={addSingleAccount}>
                 <CardHeader>
                   <CardTitle>Account Details</CardTitle>
                   <CardDescription>
@@ -92,11 +92,11 @@ export default function AddAccountPage({
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="proxy">Proxy Address</Label>
-                    <Input 
-                      id="proxy" 
-                      name="proxy" 
-                      placeholder="host:port or host:port:username:password" 
-                      required 
+                    <Input
+                      id="proxy"
+                      name="proxy"
+                      placeholder="host:port or host:port:username:password"
+                      required
                     />
                     <p className="text-sm text-gray-500">
                       Enter your HTTP proxy in the format host:port or host:port:username:password
@@ -112,10 +112,10 @@ export default function AddAccountPage({
               </form>
             </Card>
           </TabsContent>
-          
+
           <TabsContent value="bulk">
             <Card className="border-0 shadow-lg">
-              <form action={addBulkAccounts} method="post" encType="application/x-www-form-urlencoded">
+              <form action={addBulkAccounts}>
                 <CardHeader>
                   <CardTitle>Bulk Upload Accounts</CardTitle>
                   <CardDescription>
@@ -127,10 +127,10 @@ export default function AddAccountPage({
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="bulkAccounts">Accounts (one per line)</Label>
-                    <Textarea 
-                      id="bulkAccounts" 
+                    <Textarea
+                      id="bulkAccounts"
                       name="bulkAccounts"
-                      placeholder="username1:password1:proxy1.example.com:8080&#10;username2:password2:proxy2.example.com:8080" 
+                      placeholder="username1:password1:proxy1.example.com:8080&#10;username2:password2:proxy2.example.com:8080"
                       className="font-mono h-64 resize-y"
                       required
                     />
@@ -148,29 +148,30 @@ export default function AddAccountPage({
               </form>
             </Card>
           </TabsContent>
-          
+
           <TabsContent value="csv">
             <Card className="border-0 shadow-lg">
-              <form action="/dashboard/accounts/add/upload" method="post" encType="multipart/form-data">
+              <form action="/dashboard/accounts/add/upload" encType="multipart/form-data">
                 <CardHeader>
                   <CardTitle>Upload CSV File</CardTitle>
                   <CardDescription>
                     Upload a CSV file with Instagram accounts. The file should have the following columns:
                     <code className="block mt-2 p-2 bg-gray-100 dark:bg-gray-800 rounded">username,password,proxy</code>
                     Each row represents one account. The proxy format can be host:port or host:port:username:password
-                    
-                    <div className="mt-4 text-sm">
-                      <div className="font-semibold">Example CSV format:</div>
-                      <pre className="bg-gray-100 dark:bg-gray-800 p-2 rounded mt-1 overflow-x-auto">
-                        username,password,proxy<br/>
-                        user1,pass123,192.168.1.1:8080<br/>
-                        user2,pass456,proxy.example.com:8080:proxyuser:proxypass<br/>
-                      </pre>
-                    </div>
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <FileUpload 
+                  <div className="mt-4 text-sm">
+                    <div className="font-semibold">Example CSV format:</div>
+                    <div className="bg-gray-100 dark:bg-gray-800 p-2 rounded mt-1 overflow-x-auto">
+                      <pre className="whitespace-pre">
+                        username,password,proxy
+                        user1,pass123,192.168.1.1:8080
+                        user2,pass456,proxy.example.com:8080:proxyuser:proxypass
+                      </pre>
+                    </div>
+                  </div>
+                  <FileUpload
                     id="csvFile"
                     name="csvFile"
                     accept=".csv"

@@ -5,16 +5,16 @@ import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 
 export async function addSingleAccount(formData: FormData) {
-  // Debug výpis všech klíčů a hodnot ve FormData
-  console.log("Zpracování formuláře: addSingleAccount");
-  console.log("Všechna pole formuláře:", [...formData.entries()].map(([key, value]) => `${key}: ${typeof value === 'string' ? value : 'File'}`));
-  
-  // Podpora pro formáty s i bez prefixů
+  // Debug log of all form data keys and values
+  console.log("Processing form: addSingleAccount");
+  console.log("All form fields:", [...formData.entries()].map(([key, value]) => `${key}: ${typeof value === 'string' ? value : 'File'}`));
+
+  // Support for formats with and without prefixes
   let username = formData.get('username') as string;
   let password = formData.get('password') as string;
   let proxyAddress = formData.get('proxy') as string;
-  
-  // Kontrola, zda existují alternativní pole s prefixy (např. z jiného frameworku nebo úpravy dat při odeslání)
+
+  // Check for alternative fields with prefixes (e.g., from other frameworks or data modifications)
   for (const [key, value] of formData.entries()) {
     if (key.endsWith('_username') || key.includes('username')) {
       username = value as string;
@@ -27,31 +27,31 @@ export async function addSingleAccount(formData: FormData) {
     }
   }
 
-  console.log("Zpracovaná data:", { username, password: password ? '***' : undefined, proxyAddress });
+  console.log("Processed data:", { username, password: password ? '***' : undefined, proxyAddress });
 
   if (!username || !password || !proxyAddress) {
-    console.log("Chybí povinná pole:", { hasUsername: !!username, hasPassword: !!password, hasProxy: !!proxyAddress });
+    console.log("Missing required fields:", { hasUsername: !!username, hasPassword: !!password, hasProxy: !!proxyAddress });
     // For form validation, we'd ideally use a client-side validation
     // or return a proper response, but for now we'll just redirect with an error
     redirect('/dashboard/accounts/add?error=missing-fields')
   }
 
   try {
-    console.log("Pokus o přidání účtu:", { username, proxyAddress });
+    console.log("Attempting to add account:", { username, proxyAddress });
     await addAccount({
       username,
       password,
       proxyAddress
     })
 
-    console.log("Účet úspěšně přidán");
+    console.log("Account successfully added");
     revalidatePath('/dashboard/accounts')
     redirect('/dashboard/accounts')
   } catch (error) {
-    // Podrobnější logování chyby
-    console.error("Chyba při přidávání účtu:", error);
+    // Detailed error logging
+    console.error("Error adding account:", error);
     if (error instanceof Error) {
-      console.error("Detail chyby:", error.message);
+      console.error("Error details:", error.message);
       console.error("Stack trace:", error.stack);
     }
     // Redirect with an error param
@@ -70,7 +70,7 @@ export async function addBulkAccounts(formData: FormData) {
     const lines = bulkText.split('\n').filter(line => line.trim() !== '')
     const accounts = lines.map(line => {
       const parts = line.split(':')
-      
+
       // Ensure we have at least username, password, and proxy host
       if (parts.length < 3) {
         throw new Error(`Invalid format in line: ${line}`)
@@ -78,7 +78,7 @@ export async function addBulkAccounts(formData: FormData) {
 
       const username = parts[0].trim()
       const password = parts[1].trim()
-      
+
       // Handle different proxy formats
       let proxyAddress
       if (parts.length === 3) {

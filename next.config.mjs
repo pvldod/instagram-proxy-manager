@@ -19,14 +19,14 @@ const nextConfig = {
         'puppeteer': false,
       };
     }
-    
+
     config.externals = [
-      ...(config.externals || []), 
-      'puppeteer', 
-      'puppeteer-extra', 
+      ...(config.externals || []),
+      'puppeteer',
+      'puppeteer-extra',
       'puppeteer-extra-plugin-stealth'
     ];
-    
+
     return config;
   },
   experimental: {
@@ -35,9 +35,9 @@ const nextConfig = {
     },
   },
   serverExternalPackages: [
-    'puppeteer-core', 
-    'puppeteer', 
-    'puppeteer-extra', 
+    'puppeteer-core',
+    'puppeteer',
+    'puppeteer-extra',
     'puppeteer-extra-plugin-stealth'
   ],
   async headers() {
@@ -47,7 +47,9 @@ const nextConfig = {
         headers: [
           {
             key: 'Content-Security-Policy',
-            value: "default-src 'self'; script-src 'self' 'unsafe-inline'; connect-src 'self' https://instagram.com; img-src 'self' data:;"
+            value: process.env.NODE_ENV === 'development'
+              ? "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://instagram.com; img-src 'self' data:;"
+              : "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://instagram.com; img-src 'self' data:;"
           }
         ]
       }
